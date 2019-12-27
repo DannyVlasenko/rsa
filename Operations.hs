@@ -1,18 +1,29 @@
 module Operations where
 
-mgcd :: Integer -> Integer -> Integer
-mgcd a 0 = a
-mgcd 0 b = b
-mgcd _ 1 = 1
-mgcd 1 _ = 1
-mgcd a b 
-    | a==b = a
-    | otherwise = if a > b then gcd (a-b) b else gcd a (b-a)
+data BezoutCoefficients = BezoutXY Integer Integer
+    deriving(Show)
 
-mlcm :: Integer -> Integer -> Integer
-mlcm 0 _ = 0
-mlcm _ 0 = 0
-mlcm a b = div (a * b) (gcd a b)
+bezoutX :: BezoutCoefficients -> Integer
+bezoutX (BezoutXY x _) = x
+
+bezoutY :: BezoutCoefficients -> Integer
+bezoutY (BezoutXY _ y) = y
+
+extendedGcd :: Integer -> Integer -> (Integer, BezoutCoefficients)
+extendedGcd a 0 = (a, (BezoutXY 1 0))
+extendedGcd a b = (d, (BezoutXY y (x - y * (div a b)))) where
+    egcd = extendedGcd b (mod a b)
+    d = fst egcd
+    x = (bezoutX . snd) egcd
+    y = (bezoutY . snd) egcd
+
+inverseModulo :: Integer -> Integer -> Integer
+inverseModulo a m = (positiveInverse . bezoutX . snd . extendedGcd a) m where
+    positiveInverse i =
+        if (i < 0) then
+            m + i
+        else
+            i
 
 powerModulo :: Integer -> Integer -> Integer -> Integer
 powerModulo _ _ 1 = 0
