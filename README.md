@@ -1,2 +1,2 @@
 # rsa
-naive rsa implementation written on haskell
+naive rsa implementations
