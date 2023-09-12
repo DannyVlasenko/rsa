@@ -1,3 +1,6 @@
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.log10
 import kotlin.math.pow
 
 fun ULong.powerModulo(exp: ULong, modulo: ULong): ULong {
@@ -13,8 +16,13 @@ fun ULong.powerModulo(exp: ULong, modulo: ULong): ULong {
     }
 }
 data class KeySize(val bits: Int){
-    fun toInt() = bits
+    fun bitDigitsCount() = bits
+    fun decimalDigitsCount() = when(bits){
+        0 -> 1
+        else -> log10(abs(2.0.pow(bits / 2).toDouble())).toInt() + 1
+    }
 }
+data class PrimeSize(val p: Int, val q: Int){}
 data class Modulus(val modulus: ULong){
     fun toULong() = modulus
 }
@@ -46,8 +54,10 @@ data class CipherText(val blocks: List<CipherBlock>):Iterable<CipherBlock> {
     }
 }
 
-fun primeLengthFromKeySize(keySize: KeySize): Int {
-    val digits = countDigits(2.0.pow(keySize.toInt() / 2))
+fun primeSizeFromKeySize(keySize: KeySize): PrimeSize {
+    val digits = keySize.decimalDigitsCount()
+    val keySizeDelta = randonIntegerModulo(5)
+    return PrimeSize(digits - keySizeDelta, digits + keySizeDelta)
 }
 
 fun generate(keySize: KeySize = KeySize(1024)): KeyPair{
@@ -64,8 +74,11 @@ fun decrypt(cipherText: CipherText, privateKey: PrivateKey): PlainText {
 
 fun main(args: Array<String>) {
     println("Hello World!")
-    PublicKey(Modulus(1), PublicExp(2))
-    // Try adding program arguments via Run/Debug configuration.
-    // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
+    PublicKey(Modulus(1u), PublicExp(2u))
+
+    val reader = Scanner(System.`in`)
+    print("Enter a number: ")
+    var integer:Int = reader.nextInt()
+    
     println("Program arguments: ${args.joinToString()}")
 }

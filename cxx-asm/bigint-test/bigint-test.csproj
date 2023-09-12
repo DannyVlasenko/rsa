@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>bigint_test</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+
+	<Choose>
+		<When Condition="'$(Configuration)'=='Release'">
+			<ItemGroup Condition="">
+				<None Include="..\x64\TestDllTest\bigint.dll" Link="bigint.dll">
+					<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				</None>
+			</ItemGroup>
+		</When>
+		<When Condition="'$(Configuration)'=='Debug'">
+			<ItemGroup Condition="">
+				<None Include="..\x64\TestDllDebug\bigint.dll" Link="bigint.dll">
+					<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				</None>
+				<None Include="..\x64\TestDllDebug\bigint.pdb" Link="bigint.pdb">
+					<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				</None>
+			</ItemGroup>
+		</When>
+	</Choose>
+
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.8" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.2.8" />
+    <PackageReference Include="coverlet.collector" Version="3.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\bigint\bigint.vcxproj" />
+  </ItemGroup>
+
+</Project>
