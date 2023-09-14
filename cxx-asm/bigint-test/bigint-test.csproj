@@ -15,7 +15,7 @@
 	<Choose>
 		<When Condition="'$(Configuration)'=='Release'">
 			<ItemGroup Condition="">
-				<None Include="..\x64\TestDllTest\bigint.dll" Link="bigint.dll">
+				<None Include="..\x64\TestDll\bigint.dll" Link="bigint.dll">
 					<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 				</None>
 			</ItemGroup>

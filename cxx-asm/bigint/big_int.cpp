@@ -55,6 +55,10 @@ BigUInt& BigUInt::operator-=(const BigUInt& rhs)
 	{
 		digits_.resize(0);
 	}
+	while (!digits_.empty() && digits_.back() == 0)
+	{
+		digits_.resize(digits_.size() - 1);
+	}
 	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
 }
@@ -75,10 +79,41 @@ BigUInt& BigUInt::operator*=(const BigUInt& rhs)
 	return *this;
 }
 
-BigUInt& BigUInt::operator/=(const BigUInt& rhs)
+DivisionResult div(const BigUInt &lhs, const BigUInt& rhs)
 {
-	assert(digits_.empty() || digits_.back() != 0);
-	return *this;
+	DivisionResult res { 0_bui, lhs };
+	while (res.remainder >= rhs)
+	{
+		res.quotient += 1_bui;
+		res.remainder -= rhs;
+	}
+	return res;
+}
+
+BigUInt pow(BigUInt base, BigUInt exp)
+{
+	BigUInt result = 1_bui;
+	for (;;)
+	{
+		if (exp.digits_[0] & 1)
+			result *= base;
+		exp >>= 1;
+		if (exp == 0_bui)
+			break;
+		base *= base;
+	}
+
+	return result;
+}
+
+BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs)
+{
+	return div(lhs, rhs).quotient;
+}
+
+BigUInt operator%(const BigUInt& lhs, const BigUInt& rhs)
+{
+	return div(lhs, rhs).remainder;
 }
 
 std::ostream& operator<<(std::ostream& sout, const BigUInt& value)
@@ -99,20 +134,18 @@ std::ostream& operator<<(std::ostream& sout, const BigUInt& value)
 	}
 	if (flags & std::ios_base::dec)
 	{
-		for (size_t i = 0; i < value.digits_.size(); ++i)
+		const auto dec_digits_number = std::floor(std::log(std::pow(std::numeric_limits<unsigned long long>::max(), value.digits_.size()))/std::log(10)) + 1;
+		BigUInt denominator(BigUInt())
+		while(dec_digits_number > 0 and )
+		auto leftover {value};
+		std::vector<unsigned> digits;
+		while (leftover > 0_bui)
 		{
-			const auto long_digit = value.digits_[i];
-			unsigned char carry = 0;
-			unsigned char dec_digit = 0;
-			for (size_t byte = 0; byte < sizeof(unsigned long long) * 2; ++byte)
-			{
-				const auto bits = byte * 4;
-				const auto bt = static_cast<unsigned char>((long_digit & (0xFull << bits)) >> bits);
-				dec_digit = (bt % 16 + carry) % 10;
-				carry = (bt % 16 + carry) / 10;
-				sout << dec_digit;
-			}
+			auto res = div(leftover, 10_bui);
+			digits.push_back(res.remainder.digits_.empty() ? 0 : res.remainder.digits_[0]);
+			swap(leftover, res.quotient);
 		}
+		std::copy(digits.rbegin(), digits.rend(), std::ostream_iterator<unsigned>(sout));
 	}
 	return sout;
 }
