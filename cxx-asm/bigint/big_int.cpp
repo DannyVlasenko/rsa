@@ -65,18 +65,70 @@ BigUInt& BigUInt::operator-=(const BigUInt& rhs)
 
 BigUInt& BigUInt::operator*=(const BigUInt& rhs)
 {
-	digits_.resize(digits_.size() + rhs.digits_.size());
-	const auto operations_count = rhs.digits_.size();
+	const auto lhsSize = digits_.size();
+	digits_.resize(lhsSize + rhs.digits_.size());
 	unsigned long long hi = 0;
 	unsigned char carry = 0;
-	for (size_t i = 0; i < operations_count; ++i)
+	size_t power{0};
+	for (size_t i = 0; i < lhsSize; ++i)
 	{
-		carry = _subborrow_u64(carry, digits_[i], hi, &digits_[i]);
-		digits_[i] = _mulx_u64(digits_[i], rhs.digits_[i], &hi);
+		BigUInt intermediate{0u};
+		intermediate.digits_.resize(power);
+		for (size_t k = 0; k < rhs.digits_.size(); ++k){
+			carry = _addcarry_u64(carry, digits_[i], hi, &digits_[i]);
+			digits_[i] = _mulx_u64(digits_[i], rhs.digits_[i], &hi);
+		}
+
 	}
-	digits_[operations_count] = hi + carry;
 	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
+}
+
+BigUInt& BigUInt::operator<<=(int shift)
+{
+	const auto eachDigitShift = shift % std::numeric_limits<unsigned long long>::digits;
+	const auto digitsToShift = shift / std::numeric_limits<unsigned long long>::digits;
+	if(eachDigitShift != 0)
+	{
+		auto carry = 0ull;
+		const auto carryMask = 1ull << (eachDigitShift - 1);
+		for(auto& digit : digits_)
+		{
+			digit = _rotl64(digit, eachDigitShift);
+			const auto newCarry = digit & carryMask;
+			digit = carry | (digit & ~carryMask);
+			carry = newCarry;
+		}
+		if (carry != 0){
+			digits_.push_back(carry);
+		}
+	}
+	digits_.insert(digits_.begin(), digitsToShift, 0ull);
+	return *this;
+}
+
+BigUInt& BigUInt::operator>>=(int shift)
+{
+	return *this;
+}
+
+BigUInt operator*(const BigUInt& lhs, const BigUInt& rhs)
+{
+	BigUInt result{0u};
+	unsigned long long hi = 0;
+	unsigned char carry = 0;
+	size_t power{0};
+	for (size_t i = 0; i < rhs.digits_.size(); ++i)
+	{
+		BigUInt intermediate{0u};
+		intermediate.digits_.resize(i + lhs.digits_.size());
+		for (size_t k = 0; k < lhs.digits_.size(); ++k){
+			carry = _addcarry_u64(carry, intermediate.digits_[i], hi, &intermediate.digits_[i]);
+			intermediate.digits_[i+k] = _mulx_u64(lhs.digits_[k], rhs.digits_[i], &hi);
+		}
+		result += intermediate;
+	}
+	return result;
 }
 
 DivisionResult div(const BigUInt &lhs, const BigUInt& rhs)
@@ -92,18 +144,7 @@ DivisionResult div(const BigUInt &lhs, const BigUInt& rhs)
 
 BigUInt pow(BigUInt base, BigUInt exp)
 {
-	BigUInt result = 1_bui;
-	for (;;)
-	{
-		if (exp.digits_[0] & 1)
-			result *= base;
-		exp >>= 1;
-		if (exp == 0_bui)
-			break;
-		base *= base;
-	}
-
-	return result;
+	return 0_bui;
 }
 
 BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs)
@@ -134,9 +175,6 @@ std::ostream& operator<<(std::ostream& sout, const BigUInt& value)
 	}
 	if (flags & std::ios_base::dec)
 	{
-		const auto dec_digits_number = std::floor(std::log(std::pow(std::numeric_limits<unsigned long long>::max(), value.digits_.size()))/std::log(10)) + 1;
-		BigUInt denominator(BigUInt())
-		while(dec_digits_number > 0 and )
 		auto leftover {value};
 		std::vector<unsigned> digits;
 		while (leftover > 0_bui)

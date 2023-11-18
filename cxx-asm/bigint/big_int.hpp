@@ -44,6 +44,9 @@ public:
 		return *this;
 	}
 
+	BigUInt& operator<<=(int shift);
+
+	BigUInt& operator>>=(int shift);
 
 	friend BigUInt operator+(BigUInt lhs, const BigUInt& rhs)
 	{
@@ -57,11 +60,7 @@ public:
 		return lhs;
 	}
 
-	friend BigUInt operator*(BigUInt lhs, const BigUInt& rhs)
-	{
-		lhs *= rhs;
-		return lhs;
-	}
+	friend BigUInt operator*(const BigUInt& lhs, const BigUInt& rhs);
 
 	friend BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs);
 
