@@ -60,7 +60,7 @@ public:
 		return lhs;
 	}
 
-	friend BigUInt operator*(const BigUInt& lhs, const BigUInt& rhs);
+	friend BigUInt operator*(BigUInt lhs, BigUInt rhs);
 
 	friend BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs);
 

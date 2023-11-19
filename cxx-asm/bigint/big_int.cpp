@@ -1,4 +1,6 @@
 #include "big_int.hpp"
+
+#include <algorithm>
 #include <ostream>
 #include <sstream>
 #include <ranges>
@@ -65,22 +67,8 @@ BigUInt& BigUInt::operator-=(const BigUInt& rhs)
 
 BigUInt& BigUInt::operator*=(const BigUInt& rhs)
 {
-	const auto lhsSize = digits_.size();
-	digits_.resize(lhsSize + rhs.digits_.size());
-	unsigned long long hi = 0;
-	unsigned char carry = 0;
-	size_t power{0};
-	for (size_t i = 0; i < lhsSize; ++i)
-	{
-		BigUInt intermediate{0u};
-		intermediate.digits_.resize(power);
-		for (size_t k = 0; k < rhs.digits_.size(); ++k){
-			carry = _addcarry_u64(carry, digits_[i], hi, &digits_[i]);
-			digits_[i] = _mulx_u64(digits_[i], rhs.digits_[i], &hi);
-		}
-
-	}
-	assert(digits_.empty() || digits_.back() != 0);
+	auto temp = *this * rhs;
+	swap(*this, temp);
 	return *this;
 }
 
@@ -134,21 +122,17 @@ BigUInt& BigUInt::operator>>=(int shift)
 	return *this;
 }
 
-BigUInt operator*(const BigUInt& lhs, const BigUInt& rhs)
+BigUInt operator*(BigUInt lhs, BigUInt rhs)
 {
-	BigUInt result{0u};
-	unsigned long long hi = 0;
-	unsigned char carry = 0;
-	size_t power{0};
-	for (size_t i = 0; i < rhs.digits_.size(); ++i)
+	BigUInt result{rhs};
+	while(lhs > 1_bui)
 	{
-		BigUInt intermediate{0u};
-		intermediate.digits_.resize(i + lhs.digits_.size());
-		for (size_t k = 0; k < lhs.digits_.size(); ++k){
-			carry = _addcarry_u64(carry, intermediate.digits_[i], hi, &intermediate.digits_[i]);
-			intermediate.digits_[i+k] = _mulx_u64(lhs.digits_[k], rhs.digits_[i], &hi);
+		lhs <<= 1;
+		rhs >>= 1;
+		if (lhs.digits_.empty() || (lhs.digits_[0] & 1ull) != 0)
+		{
+			result += rhs;
 		}
-		result += intermediate;
 	}
 	return result;
 }
