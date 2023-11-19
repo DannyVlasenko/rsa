@@ -104,11 +104,33 @@ BigUInt& BigUInt::operator<<=(int shift)
 		}
 	}
 	digits_.insert(digits_.begin(), digitsToShift, 0ull);
+	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
 }
 
 BigUInt& BigUInt::operator>>=(int shift)
 {
+	const auto eachDigitShift = shift % std::numeric_limits<unsigned long long>::digits;
+	const auto digitsToShift = shift / std::numeric_limits<unsigned long long>::digits;
+	digits_.erase(digits_.begin(), digits_.begin() + digitsToShift);
+	if(eachDigitShift != 0)
+	{
+		auto carry = 0ull;
+		const auto carryMaskRight = 1ull << (eachDigitShift - 1);
+		for(auto it = digits_.rbegin(); it != digits_.rend(); ++it)
+		{
+			auto &digit = *it;
+			const auto newCarry = _rotr64(carryMaskRight & digit, shift);
+			digit >>= eachDigitShift;
+			digit |= carry;
+			carry = newCarry;
+		}
+		while (!digits_.empty() && digits_.back() == 0)
+		{
+			digits_.resize(digits_.size() - 1);
+		}
+	}
+	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
 }
 
