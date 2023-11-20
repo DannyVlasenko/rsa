@@ -72,6 +72,31 @@ BigUInt& BigUInt::operator*=(const BigUInt& rhs)
 	return *this;
 }
 
+BigUInt& BigUInt::operator++()
+{
+	if (digits_.empty())
+	{
+		digits_.push_back(1);
+		return *this;
+	}
+	for(auto& digit : digits_)
+	{
+		++digit;
+		if (digit != 0)
+		{
+			break;
+		}
+	}
+	return *this;
+}
+
+BigUInt BigUInt::operator++(int)
+{
+	BigUInt old = *this;
+	operator++();
+	return old;
+}
+
 BigUInt& BigUInt::operator<<=(int shift)
 {
 	const auto eachDigitShift = shift % std::numeric_limits<unsigned long long>::digits;
@@ -139,10 +164,14 @@ BigUInt operator*(BigUInt lhs, BigUInt rhs)
 
 DivisionResult div(const BigUInt &lhs, const BigUInt& rhs)
 {
+	if (rhs == 0_bui)
+	{
+		throw std::runtime_error("Division by zero.");
+	}
 	DivisionResult res { 0_bui, lhs };
 	while (res.remainder >= rhs)
 	{
-		res.quotient += 1_bui;
+		++res.quotient;
 		res.remainder -= rhs;
 	}
 	return res;

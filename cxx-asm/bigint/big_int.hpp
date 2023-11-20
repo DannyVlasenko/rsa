@@ -44,6 +44,10 @@ public:
 		return *this;
 	}
 
+	BigUInt& operator++();
+
+	BigUInt operator++(int);
+
 	BigUInt& operator<<=(int shift);
 
 	BigUInt& operator>>=(int shift);
