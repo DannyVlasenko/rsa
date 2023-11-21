@@ -52,6 +52,10 @@ public:
 
 	BigUInt& operator>>=(int shift);
 
+	BigUInt& operator&=(const BigUInt& rhs);
+
+	BigUInt& operator|=(const BigUInt& rhs);
+
 	friend BigUInt operator+(BigUInt lhs, const BigUInt& rhs)
 	{
 		lhs += rhs;
@@ -69,6 +73,18 @@ public:
 	friend BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs);
 
 	friend BigUInt operator%(const BigUInt& lhs, const BigUInt& rhs);
+
+	friend BigUInt operator&(BigUInt lhs, const BigUInt& rhs)
+	{
+		lhs &= rhs;
+		return lhs;
+	}
+
+	friend BigUInt operator|(BigUInt lhs, const BigUInt& rhs)
+	{
+		lhs |= rhs;
+		return lhs;
+	}
 
 	friend bool operator==(const BigUInt& lhs, const BigUInt& rhs)
 	{
@@ -103,7 +119,7 @@ struct DivisionResult
 	BigUInt remainder;
 };
 
-DivisionResult div(const BigUInt &lhs, const BigUInt& rhs);
+DivisionResult div(const BigUInt &lhs, BigUInt rhs);
 
 BigUInt pow(BigUInt base, BigUInt exp);
 

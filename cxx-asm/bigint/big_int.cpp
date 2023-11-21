@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <ostream>
+#include <ranges>
 #include <sstream>
 #include <ranges>
 #include <cassert>
@@ -130,9 +131,8 @@ BigUInt& BigUInt::operator>>=(int shift)
 	{
 		auto carry = 0ull;
 		const auto carryMaskRight = 1ull << (eachDigitShift - 1);
-		for(auto it = digits_.rbegin(); it != digits_.rend(); ++it)
+		for (auto& digit : std::ranges::reverse_view(digits_))
 		{
-			auto &digit = *it;
 			const auto newCarry = _rotr64(carryMaskRight & digit, shift);
 			digit >>= eachDigitShift;
 			digit |= carry;
@@ -142,6 +142,38 @@ BigUInt& BigUInt::operator>>=(int shift)
 		{
 			digits_.resize(digits_.size() - 1);
 		}
+	}
+	assert(digits_.empty() || digits_.back() != 0);
+	return *this;
+}
+
+BigUInt& BigUInt::operator&=(const BigUInt& rhs)
+{
+	if (digits_.size() > rhs.digits_.size())
+	{
+		digits_.resize(rhs.digits_.size());
+	}
+	for (size_t i = 0; i < digits_.size(); ++i)
+	{
+		digits_[i] &= rhs.digits_[i];
+	}
+	assert(digits_.empty() || digits_.back() != 0);
+	return *this;
+}
+
+BigUInt& BigUInt::operator|=(const BigUInt& rhs)
+{
+	if (rhs.digits_.size() > digits_.size())
+	{
+		digits_.resize(rhs.digits_.size());
+	}
+	for (size_t i = 0; i < rhs.digits_.size(); ++i)
+	{
+		digits_[i] |= rhs.digits_[i];
+	}
+	while (!digits_.empty() && digits_.back() == 0)
+	{
+		digits_.resize(digits_.size() - 1);
 	}
 	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
@@ -162,7 +194,7 @@ BigUInt operator*(BigUInt lhs, BigUInt rhs)
 	return result;
 }
 
-DivisionResult div(const BigUInt &lhs, const BigUInt& rhs)
+DivisionResult div(const BigUInt &lhs, BigUInt rhs)
 {
 	if (rhs == 0_bui)
 	{
