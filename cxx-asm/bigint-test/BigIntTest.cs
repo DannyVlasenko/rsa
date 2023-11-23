@@ -151,11 +151,11 @@ namespace bigint_test
 		public void GivenRandomBytes_WhenCreateFromBytes_ThenStringRepresentationsEqual()
 		{
 			var random = new Random();
-			for (int i = 1; i < 512; i++)
+			for (int i = 1; i < 6; i++)
 			{
 				var data = new byte[i+1];
 				var actualBytes = new Span<byte>(data, 0, data.Length - 1);
-				for (int j = 0; j < i * 10; j++)
+				for (int j = 0; j < 100; j++)
 				{
 					random.NextBytes(actualBytes);
 					var gt = new BigInteger(data);

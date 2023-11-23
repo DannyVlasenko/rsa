@@ -157,6 +157,10 @@ BigUInt& BigUInt::operator&=(const BigUInt& rhs)
 	{
 		digits_[i] &= rhs.digits_[i];
 	}
+	while (!digits_.empty() && digits_.back() == 0)
+	{
+		digits_.resize(digits_.size() - 1);
+	}
 	assert(digits_.empty() || digits_.back() != 0);
 	return *this;
 }
@@ -181,17 +185,33 @@ BigUInt& BigUInt::operator|=(const BigUInt& rhs)
 
 BigUInt operator*(BigUInt lhs, BigUInt rhs)
 {
-	BigUInt result{rhs};
+	if (lhs == 0_bui || rhs == 0_bui)
+	{
+		return 0_bui;
+	}
+	BigUInt result{(lhs.digits_[0] & 1ull) != 0 ? rhs : 0_bui};
 	while(lhs > 1_bui)
 	{
-		lhs <<= 1;
-		rhs >>= 1;
-		if (lhs.digits_.empty() || (lhs.digits_[0] & 1ull) != 0)
+		lhs >>= 1;
+		rhs <<= 1;
+		if (!lhs.digits_.empty() && (lhs.digits_[0] & 1ull) != 0)
 		{
 			result += rhs;
 		}
 	}
 	return result;
+}
+
+static DivisionResult div10(const BigUInt &lhs)
+{
+	auto quotient = lhs * 3435973837_bui;
+	quotient >>= 35;
+	auto remainder = lhs - quotient * 10_bui;
+	return DivisionResult
+	{
+		.quotient = std::move(quotient),
+		.remainder = std::move(remainder)
+	};
 }
 
 DivisionResult div(const BigUInt &lhs, BigUInt rhs)
@@ -200,11 +220,16 @@ DivisionResult div(const BigUInt &lhs, BigUInt rhs)
 	{
 		throw std::runtime_error("Division by zero.");
 	}
+	if (rhs == 10_bui)
+	{
+		return div10(lhs);
+	}
 	DivisionResult res { 0_bui, lhs };
 	while (res.remainder >= rhs)
 	{
 		++res.quotient;
 		res.remainder -= rhs;
+		
 	}
 	return res;
 }
