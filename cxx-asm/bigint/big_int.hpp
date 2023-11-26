@@ -18,6 +18,16 @@ public:
 		}
 	}
 
+	template<std::unsigned_integral T>
+	explicit BigUInt(T v, size_t pos) : digits_(pos + 1)
+	{
+		digits_.back() = v;
+		if(digits_.back() == 0)
+		{
+			digits_.resize(0);
+		}
+	}
+
 	explicit BigUInt(std::span<unsigned char> data);
 
 	friend void swap(BigUInt& lhs, BigUInt& rhs) noexcept
@@ -70,6 +80,21 @@ public:
 
 	friend BigUInt operator*(BigUInt lhs, BigUInt rhs);
 
+	friend void div(BigUInt lhs, BigUInt rhs, BigUInt &out_quotient, BigUInt &out_remainder);
+
+	friend auto div(const BigUInt &lhs, const BigUInt &rhs)
+	{
+		struct DivisionResult
+		{
+			BigUInt quotient;
+			BigUInt remainder;
+		};
+
+		DivisionResult res;
+		div(lhs, rhs, res.quotient, res.remainder);
+		return res;
+	}
+
 	friend BigUInt operator/(const BigUInt& lhs, const BigUInt& rhs);
 
 	friend BigUInt operator%(const BigUInt& lhs, const BigUInt& rhs);
@@ -93,6 +118,10 @@ public:
 
 	friend auto operator<=>(const BigUInt& lhs, const BigUInt& rhs)
 	{
+		if (lhs.digits_.size() != rhs.digits_.size())
+		{
+			return lhs.digits_.size() <=> rhs.digits_.size();
+		}
 		return std::lexicographical_compare_three_way(lhs.digits_.rbegin(), lhs.digits_.rend(),
 			rhs.digits_.rbegin(), rhs.digits_.rend());
 	}
@@ -112,14 +141,6 @@ public:
 private:
 	std::vector<unsigned long long> digits_;
 };
-
-struct DivisionResult
-{
-	BigUInt quotient;
-	BigUInt remainder;
-};
-
-DivisionResult div(const BigUInt &lhs, BigUInt rhs);
 
 BigUInt pow(BigUInt base, BigUInt exp);
 

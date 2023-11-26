@@ -21,12 +21,11 @@ BigUInt::BigUInt(std::span<unsigned char> data)
 
 BigUInt& BigUInt::operator+=(const BigUInt& rhs)
 {
-	auto operations_count = digits_.size();
+	auto operations_count = rhs.digits_.size();
 	if (digits_.size() < rhs.digits_.size())
 	{
 		digits_.reserve(rhs.digits_.size() + 1);
 		digits_.resize(rhs.digits_.size());
-		operations_count = digits_.size();
 	}
 	unsigned char carry = 0;
 	for (size_t i = 0; i < operations_count; ++i)
@@ -56,7 +55,14 @@ BigUInt& BigUInt::operator-=(const BigUInt& rhs)
 	}
 	if (carry != 0)
 	{
-		digits_.resize(0);
+		if (digits_.size() == rhs.digits_.size())
+		{
+			digits_.resize(0);
+		}
+		else
+		{
+			--digits_[operations_count];
+		}
 	}
 	while (!digits_.empty() && digits_.back() == 0)
 	{
@@ -202,36 +208,78 @@ BigUInt operator*(BigUInt lhs, BigUInt rhs)
 	return result;
 }
 
-static DivisionResult div10(const BigUInt &lhs)
+void div(BigUInt lhs, BigUInt rhs, BigUInt& out_quotient, BigUInt& out_remainder)
 {
-	auto quotient = lhs * 3435973837_bui;
-	quotient >>= 35;
-	auto remainder = lhs - quotient * 10_bui;
-	return DivisionResult
-	{
-		.quotient = std::move(quotient),
-		.remainder = std::move(remainder)
-	};
-}
+	/**
+	 *	Implementation of Algorithm 1.6 from https://arxiv.org/pdf/1004.4710.pdf
+	 */
 
-DivisionResult div(const BigUInt &lhs, BigUInt rhs)
-{
 	if (rhs == 0_bui)
 	{
 		throw std::runtime_error("Division by zero.");
 	}
-	if (rhs == 10_bui)
+	if (lhs == rhs)
 	{
-		return div10(lhs);
+		out_quotient = 1_bui;
+		out_remainder = 0_bui;
 	}
-	DivisionResult res { 0_bui, lhs };
-	while (res.remainder >= rhs)
+	if (lhs < rhs)
 	{
-		++res.quotient;
-		res.remainder -= rhs;
-		
+		out_quotient = 0_bui;
+		out_remainder = lhs;
 	}
-	return res;
+
+	//Normalization step.
+	//The resulting remainder must divided by this multiplier.
+	auto remainder_multiplier = 0;
+	while(rhs.digits_.back() <= std::numeric_limits<unsigned long long>::max() / 2 + 1)
+	{
+		rhs <<= 1;
+		lhs <<= 1;
+		++remainder_multiplier;
+	}
+
+	//Divisor digits count.
+	const auto n = rhs.digits_.size();
+
+	//Digit count difference. This is also a maximum digit index of the quotient.
+	const auto m = lhs.digits_.size() - n;
+
+	//Dividend digits array.
+	//auto &a = lhs.digits_;
+
+	//Divisor digits array.
+	//const auto &b = rhs.digits_;
+
+	//Quotient digits array.
+	auto& q = out_quotient.digits_;
+	if (const auto betaPowMTimesB = BigUInt{ 1ull, m } * rhs; lhs >= betaPowMTimesB)
+	{
+		q.resize(m + 1);
+		q[m] = 1;
+		lhs -= betaPowMTimesB;
+	}
+	else
+	{
+		q.resize(m);
+	}
+	for (long long int j = m - 1; j >=0 ; --j)
+	{
+		//unsigned long long remainder_unused;
+		const auto qStar = _udiv128(lhs.digits_[n + j], lhs.digits_[n + j - 1], rhs.digits_[n - 1], /*&remainder_unused*/ nullptr);
+		q[j] = std::min(qStar, std::numeric_limits<unsigned long long>::max() /* Beta-1 */);
+		auto qjBetaJTimesB = BigUInt(q[j], j) * rhs;
+		//lhs = lhs - qjBetaJ * rhs;
+		while (lhs < qjBetaJTimesB)
+		{
+			--q[j];
+			lhs += BigUInt(1ull, j) * rhs;
+		}
+		lhs -= qjBetaJTimesB;
+	}
+	out_remainder = lhs >>= remainder_multiplier;
+	assert(out_remainder.digits_.empty() || out_remainder.digits_.back() != 0);
+	assert(out_quotient.digits_.empty() || out_quotient.digits_.back() != 0);
 }
 
 BigUInt pow(BigUInt base, BigUInt exp)
