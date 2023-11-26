@@ -23,8 +23,8 @@ extern "C"
 	{
 		std::stringstream stream;
 		stream << /*std::setfill('0') << std::hex << */ *handle;
-		const auto bigIntStr = stream.view();
-		if (static_cast<int>(bigIntStr.length()) > length)
+		const auto bigIntStr = stream.str();
+		if (static_cast<int>(bigIntStr.length()) >= length)
 		{
 			return -1;
 		}

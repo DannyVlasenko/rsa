@@ -151,18 +151,19 @@ namespace bigint_test
 		public void GivenRandomBytes_WhenCreateFromBytes_ThenStringRepresentationsEqual()
 		{
 			var random = new Random();
-			for (int i = 1; i < 6; i++)
+			Parallel.For(1, 512, i =>
 			{
-				var data = new byte[i+1];
+				var data = new byte[i + 1];
 				var actualBytes = new Span<byte>(data, 0, data.Length - 1);
-				for (int j = 0; j < 100; j++)
+				for (int j = 0; j < 10; j++)
 				{
 					random.NextBytes(actualBytes);
 					var gt = new BigInteger(data);
 					using var ut = new MyBigInt(actualBytes);
-					Assert.AreEqual(gt.ToString(), ut.ToString(), $"Size: {i}, Bytes: {string.Join(", ", actualBytes.ToArray())}");
+					Assert.AreEqual(gt.ToString(), ut.ToString(),
+						$"Size: {i}, Bytes: {string.Join(", ", actualBytes.ToArray())}");
 				}
-			}
+			});
 		}
 		[TestMethod]
 		public void GivenRandomBytes_WhenCreateFromBytes_ThenComparisonsGiveSameResults()
@@ -180,12 +181,12 @@ namespace bigint_test
 					random.NextBytes(actualBytes);
 					var gt2 = new BigInteger(data);
 					using var ut2 = new MyBigInt(actualBytes);
-					Assert.AreEqual(gt1 < gt2, ut1 < ut2);
-					Assert.AreEqual(gt1 <= gt2, ut1 <= ut2);
-					Assert.AreEqual(gt1 > gt2, ut1 > ut2);
-					Assert.AreEqual(gt1 >= gt2, ut1 >= ut2);
-					Assert.AreEqual(gt1 == gt2, ut1 == ut2);
-					Assert.AreEqual(gt1 != gt2, ut1 != ut2);
+					Assert.AreEqual(gt1 < gt2, ut1 < ut2);//, $"Actual: {ut1} < {ut2}");
+					Assert.AreEqual(gt1 <= gt2, ut1 <= ut2);//, $"Actual: {ut1} <= {ut2}");
+					Assert.AreEqual(gt1 > gt2, ut1 > ut2);//, $"Actual: {ut1} > {ut2}");
+					Assert.AreEqual(gt1 >= gt2, ut1 >= ut2);//, $"Actual: {ut1} >= {ut2}");
+					Assert.AreEqual(gt1 == gt2, ut1 == ut2);//, $"Actual: {ut1} == {ut2}");
+					Assert.AreEqual(gt1 != gt2, ut1 != ut2);// $"Actual: {ut1} != {ut2}");
 				}
 			}
 		}
