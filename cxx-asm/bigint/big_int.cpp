@@ -111,7 +111,7 @@ BigUInt& BigUInt::operator<<=(int shift)
 	if(eachDigitShift != 0)
 	{
 		auto carry = 0ull;
-		const auto carryMask = 1ull << (eachDigitShift - 1);
+		const auto carryMask = (1ull << eachDigitShift) - 1;
 		for(auto& digit : digits_)
 		{
 			digit = _rotl64(digit, eachDigitShift);
@@ -136,7 +136,7 @@ BigUInt& BigUInt::operator>>=(int shift)
 	if(eachDigitShift != 0)
 	{
 		auto carry = 0ull;
-		const auto carryMaskRight = 1ull << (eachDigitShift - 1);
+		const auto carryMaskRight = (1ull << eachDigitShift) - 1;
 		for (auto& digit : std::ranges::reverse_view(digits_))
 		{
 			const auto newCarry = _rotr64(carryMaskRight & digit, shift);
@@ -231,13 +231,25 @@ void div(BigUInt lhs, BigUInt rhs, BigUInt& out_quotient, BigUInt& out_remainder
 
 	//Normalization step.
 	//The resulting remainder must divided by this multiplier.
-	auto remainder_multiplier = 0;
-	while(rhs.digits_.back() <= std::numeric_limits<unsigned long long>::max() / 2 + 1)
+	auto remainder_shifts = 0;
+	/*while(rhs.digits_.back() <= std::numeric_limits<unsigned long long>::max() / 2 + 1)
 	{
 		rhs <<= 1;
 		lhs <<= 1;
-		++remainder_multiplier;
+		++remainder_shifts;
+	}*/
+
+	constexpr auto betaHalf = std::numeric_limits<unsigned long long>::max() / 2 + 1;
+	if (rhs.digits_.back() <= betaHalf)
+	{
+		const auto x = betaHalf / rhs.digits_.back() + (betaHalf % rhs.digits_.back()!=0);
+		remainder_shifts = 64ull - _lzcnt_u64(x);
+		rhs <<= remainder_shifts;
+		lhs <<= remainder_shifts;
+		assert(rhs.digits_.back() > betaHalf);
 	}
+
+	
 
 	//Divisor digits count.
 	const auto n = rhs.digits_.size();
@@ -277,7 +289,7 @@ void div(BigUInt lhs, BigUInt rhs, BigUInt& out_quotient, BigUInt& out_remainder
 		}
 		lhs -= qjBetaJTimesB;
 	}
-	out_remainder = lhs >>= remainder_multiplier;
+	out_remainder = lhs >>= remainder_shifts;
 	assert(out_remainder.digits_.empty() || out_remainder.digits_.back() != 0);
 	assert(out_quotient.digits_.empty() || out_quotient.digits_.back() != 0);
 }
